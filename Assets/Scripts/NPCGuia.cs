@@ -2,30 +2,29 @@ using UnityEngine;
 
 public class NPCGuia : MonoBehaviour
 {
+    [SerializeField] private HUDManager hudManager;
+
     private bool jugadorCerca = false;
 
     void Update()
     {
-        // Si el jugador está dentro del cuadro verde y presiona E
         if (jugadorCerca && Input.GetKeyDown(KeyCode.E))
         {
-            Debug.Log("------------------------------------------------");
-            Debug.Log("GUÍA: Hey..! Corre. *Usa F para las bombas*");
-            Debug.Log("------------------------------------------------");
+            hudManager?.AddMensajePersonaje("Hey..! Corre.\n*Usa F para las bombas*");
         }
     }
 
-    // Se activa cuando entras al área del Box Collider
+    // Se activa cuando entras al Ã¡rea del Box Collider
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
         {
             jugadorCerca = true;
-            Debug.Log("Presiona E para hablar con el guía");
+            hudManager?.AddMensajeSistema("Presiona E para hablar con el guÃ­a");
         }
     }
 
-    // Se activa cuando sales del área
+    // Se activa cuando sales del Ã¡rea
     private void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("Player"))
