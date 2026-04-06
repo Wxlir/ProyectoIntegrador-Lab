@@ -11,19 +11,19 @@ public class IAEnemigo : MonoBehaviour
 {
     [Header("Persecucion")]
     [Tooltip("Segundos maximos de persecucion antes de rendirse. Ignorado si 'perseguirPermanentemente' esta activo.")]
-    public float tiempoPersecucion = 5f;
+    public float tiempoPersecucion = 9f;
     [Tooltip("Si esta activo, el enemigo persigue indefinidamente (ignora el timer).")]
     public bool perseguirPermanentemente = false;
-    public float velocidadPersecucion = 1.5f;
+    public float velocidadPersecucion = 1.8f;
     [Tooltip("Segundos que el enemigo sigue la ultima posicion conocida tras perder al jugador de vista (ej: al doblar esquinas).")]
     public float tiempoMemoria = 5f;
     [Tooltip("Segundos extra que el enemigo rastrea la posicion real del jugador tras perderlo de vista. Permite saber en que pasillo entro al doblar. (linger tracking)")]
     public float tiempoRastreoExtra = 1f;
     [Tooltip("Segundos de cooldown tras agotar el timer de persecucion. El enemigo patrulla y no puede ver al jugador hasta que se acabe.")]
-    public float tiempoCooldown = 5f;
+    public float tiempoCooldown = 4f;
 
     [Header("Patrulla (cuando no persigue)")]
-    public float velocidadPatrulla = 0.75f;
+    public float velocidadPatrulla = 0.85f;
     public float radioPatrulla = 15f;
 
     [Header("Vision")]
@@ -31,7 +31,7 @@ public class IAEnemigo : MonoBehaviour
     [Tooltip("Semi-angulo del cono de vision en grados. Ej: 45 = 90 grados de FOV total.")]
     public float anguloVision = 45f;
     [Tooltip("A esta distancia el enemigo detecta al jugador aunque este fuera del cono (como oirlo). Util para que no puedas pararte justo atras de el sin consecuencias.")]
-    public float radioDeteccionCercana = 1.5f;
+    public float radioDeteccionCercana = 4f;
     public LayerMask capaObstaculos;
 
     private enum Estado { Patrullando, Persiguiendo, Rastreando, Recordando, Enfriando }

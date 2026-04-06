@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Scenes
   - Destructible
+  - Enemy
   layers:
   - Default
   - TransparentFX
