@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class ControlPlayer : MonoBehaviour
 {
@@ -14,6 +13,7 @@ public class ControlPlayer : MonoBehaviour
     
     private CharacterController controller;
     private float rotacionX = 0f;
+    private bool juegoTerminado;
 
     void Start()
     {
@@ -24,7 +24,10 @@ public class ControlPlayer : MonoBehaviour
 
     void Update()
     {
-        // MOVIMIENTO DE CÝMARA (360 grados)
+        if (juegoTerminado)
+            return;
+
+        // MOVIMIENTO DE C�MARA (360 grados)
         float mouseX = Input.GetAxis("Mouse X") * sensibilidadMouse;
         float mouseY = Input.GetAxis("Mouse Y") * sensibilidadMouse;
 
@@ -52,12 +55,12 @@ public class ControlPlayer : MonoBehaviour
         // 1. Creamos la esfera
         GameObject bomba = GameObject.CreatePrimitive(PrimitiveType.Sphere);
 
-        // 2. Posición en los pies (restamos 0.5 en Y) y un poco adelante
+        // 2. PosiciÃƒÂ³n en los pies (restamos 0.5 en Y) y un poco adelante
         Vector3 posicionSuelo = transform.position + new Vector3(0, -0.5f, 0) + (transform.forward * 0.5f);
         bomba.transform.position = posicionSuelo;
         bomba.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f);
 
-        // 3. Configuramos la física para que NO se mueva
+        // 3. Configuramos la fÃƒÂ­sica para que NO se mueva
         Rigidbody rb = bomba.AddComponent<Rigidbody>();
         rb.isKinematic = true; // <--- Esto evita que ruede o salga volando
 
@@ -65,14 +68,14 @@ public class ControlPlayer : MonoBehaviour
         SphereCollider sc = bomba.GetComponent<SphereCollider>();
         if (sc != null) sc.isTrigger = true;
 
-        // 5. Destrucción y explosión
+        // 5. DestrucciÃƒÂ³n y explosiÃƒÂ³n
         Destroy(bomba, 2f);
 
-        // OJO: Pasamos la posición de la BOMBA a la explosión, no la del jugador
+        // OJO: Pasamos la posiciÃƒÂ³n de la BOMBA a la explosiÃƒÂ³n, no la del jugador
         StartCoroutine(EsperarYExplotar(posicionSuelo, 2f));
     }
 
-    // Usamos una Corrutina para que la explosión ocurra donde se puso la bomba
+    // Usamos una Corrutina para que la explosiÃƒÂ³n ocurra donde se puso la bomba
     System.Collections.IEnumerator EsperarYExplotar(Vector3 posicionBomba, float tiempo)
     {
         yield return new WaitForSeconds(tiempo);
@@ -103,13 +106,18 @@ public class ControlPlayer : MonoBehaviour
 
     public void RecibirDanio()
     {
+        if (juegoTerminado)
+            return;
+
         vida--;
         hudManager?.ActualizarVida(vida);
-        hudManager?.AddMensajeSistema($"Has recibido da�o. Vida restante: {vida}.");
-        Debug.Log("Vida restante: " + vida);
+        hudManager?.AddMensajeSistema("Te han golpeado!");
         if (vida <= 0)
         {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            juegoTerminado = true;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            hudManager?.ShowLose();
         }
     }
 }

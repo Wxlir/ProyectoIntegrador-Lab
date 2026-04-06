@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using TMPro;
 
 public class HUDManager : MonoBehaviour
@@ -21,6 +23,7 @@ public class HUDManager : MonoBehaviour
 
     [Header("Lose Text")]
     public GameObject loseText;
+    [SerializeField] private Button botonReiniciar;
 
     void Awake()
     {
@@ -32,6 +35,23 @@ public class HUDManager : MonoBehaviour
             go.SetActive(false);
             _corazones[i] = go;
         }
+    }
+
+    void Start()
+    {
+        if (botonReiniciar != null)
+            botonReiniciar.onClick.AddListener(Reiniciar);
+    }
+
+    void OnDestroy()
+    {
+        if (botonReiniciar != null)
+            botonReiniciar.onClick.RemoveListener(Reiniciar);
+    }
+
+    public void Reiniciar()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     public void ActualizarVida(int corazonesRestantes)
@@ -59,10 +79,12 @@ public class HUDManager : MonoBehaviour
     public void ShowWin()
     {
         winText.SetActive(true);
+        botonReiniciar.gameObject.SetActive(true);
     }
 
     public void ShowLose()
     {
         loseText.SetActive(true);
+        botonReiniciar.gameObject.SetActive(true);
     }
 }
