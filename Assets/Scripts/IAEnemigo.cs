@@ -5,22 +5,20 @@ using UnityEngine.AI;
 // - Persigue al jugador mientras lo vea dentro de su cono de vision.
 // - Al perder la vista, rastrea la posicion real del jugador 'tiempoRastreoExtra' segundos
 //   para saber en que pasillo entro (linger tracking), luego va a ese punto 'tiempoMemoria' seg.
-// - La persecucion dura maximo 'tiempoPersecucion' segundos antes de rendirse.
-// - Para persecucion infinita: marcar 'perseguirPermanentemente' en el Inspector.
 public class IAEnemigo : MonoBehaviour
 {
     [Header("Persecucion")]
-    [Tooltip("Segundos maximos de persecucion antes de rendirse. Ignorado si 'perseguirPermanentemente' esta activo.")]
-    public float tiempoPersecucion = 9f;
-    [Tooltip("Si esta activo, el enemigo persigue indefinidamente (ignora el timer).")]
-    public bool perseguirPermanentemente = false;
     public float velocidadPersecucion = 1.8f;
     [Tooltip("Segundos que el enemigo sigue la ultima posicion conocida tras perder al jugador de vista (ej: al doblar esquinas).")]
     public float tiempoMemoria = 5f;
     [Tooltip("Segundos extra que el enemigo rastrea la posicion real del jugador tras perderlo de vista. Permite saber en que pasillo entro al doblar. (linger tracking)")]
     public float tiempoRastreoExtra = 1f;
-    [Tooltip("Segundos de cooldown tras agotar el timer de persecucion. El enemigo patrulla y no puede ver al jugador hasta que se acabe.")]
-    public float tiempoCooldown = 4f;
+
+    [Header("Ataque")]
+    [Tooltip("Distancia a la que el enemigo deja de perseguir y pasa a atacar.")]
+    public float radioAtaque = 1.2f;
+    [Tooltip("Segundos entre cada golpe al jugador.")]
+    public float tiempoEntreGolpes = 2f;
 
     [Header("Patrulla (cuando no persigue)")]
     public float velocidadPatrulla = 0.85f;
@@ -34,15 +32,14 @@ public class IAEnemigo : MonoBehaviour
     public float radioDeteccionCercana = 4f;
     public LayerMask capaObstaculos;
 
-    private enum Estado { Patrullando, Persiguiendo, Rastreando, Recordando, Enfriando }
+    private enum Estado { Patrullando, Persiguiendo, Rastreando, Recordando, Atacando }
     private Estado estado;
 
     private NavMeshAgent agente;
     private Transform jugador;
-    private float timerPersecucion;
     private float timerRastreo;
     private float timerMemoria;
-    private float timerCooldown;
+    private float timerGolpe;
     private Vector3 ultimaPosicionJugador;
 
     void Start()
@@ -85,15 +82,25 @@ public class IAEnemigo : MonoBehaviour
 
             case Estado.Persiguiendo:
                 ultimaPosicionJugador = jugador.position;
-                agente.SetDestination(ultimaPosicionJugador);
-                if (!veAlJugador)
+                float distAlJugador = Vector3.Distance(transform.position, jugador.position);
+                if (distAlJugador <= radioAtaque)
                 {
-                    // Perdio la vista: rastrear posicion real unos instantes para
-                    // saber en que pasillo entro el jugador al doblar la esquina.
-                    timerRastreo = tiempoRastreoExtra;
-                    estado = Estado.Rastreando;
+                    // Llego al jugador: detener movimiento y pasar a atacar.
+                    agente.ResetPath();
+                    estado = Estado.Atacando;
+                    timerGolpe = 0f; // Golpe inmediato al entrar en rango.
                 }
-                DescontarTimerPersecucion();
+                else
+                {
+                    agente.SetDestination(ultimaPosicionJugador);
+                    if (!veAlJugador)
+                    {
+                        // Perdio la vista: rastrear posicion real unos instantes para
+                        // saber en que pasillo entro el jugador al doblar la esquina.
+                        timerRastreo = tiempoRastreoExtra;
+                        estado = Estado.Rastreando;
+                    }
+                }
                 break;
 
             case Estado.Rastreando:
@@ -114,7 +121,6 @@ public class IAEnemigo : MonoBehaviour
                         estado = Estado.Recordando;
                     }
                 }
-                DescontarTimerPersecucion();
                 break;
 
             case Estado.Recordando:
@@ -128,15 +134,26 @@ public class IAEnemigo : MonoBehaviour
                     if (timerMemoria <= 0f)
                         DetenerPersecucion();
                 }
-                DescontarTimerPersecucion();
                 break;
 
-            case Estado.Enfriando:
-                // Durante el cooldown el enemigo solo patrulla, no puede detectar al jugador.
-                Patrullar();
-                timerCooldown -= Time.deltaTime;
-                if (timerCooldown <= 0f)
-                    estado = Estado.Patrullando;
+            case Estado.Atacando:
+                float distAtaque = Vector3.Distance(transform.position, jugador.position);
+                if (distAtaque > radioAtaque)
+                {
+                    // El jugador escapo del rango de ataque: volver a perseguir.
+                    agente.speed = velocidadPersecucion;
+                    estado = Estado.Persiguiendo;
+                }
+                else
+                {
+                    // Aplicar daño con cooldown para no golpear cada frame.
+                    timerGolpe -= Time.deltaTime;
+                    if (timerGolpe <= 0f)
+                    {
+                        timerGolpe = tiempoEntreGolpes;
+                        CausarDaño();
+                    }
+                }
                 break;
         }
     }
@@ -146,7 +163,6 @@ public class IAEnemigo : MonoBehaviour
     void IniciarPersecucion()
     {
         estado = Estado.Persiguiendo;
-        timerPersecucion = tiempoPersecucion;
         ultimaPosicionJugador = jugador.position;
         agente.speed = velocidadPersecucion;
     }
@@ -154,23 +170,6 @@ public class IAEnemigo : MonoBehaviour
     void DetenerPersecucion()
     {
         estado = Estado.Patrullando;
-        agente.speed = velocidadPatrulla;
-        agente.ResetPath();
-    }
-
-    // Para eliminar el timer: borrar este metodo, sus llamadas en Update(), e IniciarCooldown().
-    void DescontarTimerPersecucion()
-    {
-        if (perseguirPermanentemente) return;
-        timerPersecucion -= Time.deltaTime;
-        if (timerPersecucion <= 0f)
-            IniciarCooldown();
-    }
-
-    void IniciarCooldown()
-    {
-        estado = Estado.Enfriando;
-        timerCooldown = tiempoCooldown;
         agente.speed = velocidadPatrulla;
         agente.ResetPath();
     }
@@ -192,25 +191,13 @@ public class IAEnemigo : MonoBehaviour
             agente.SetDestination(hit.position);
     }
 
-    // ---- Dano al jugador (deshabilitado, listo para activar) ----------
-    // Para activar:
-    //   1. Descomentar el bloque de abajo.
-    //   2. Asegurarse de que el enemigo tenga un Collider no-Trigger.
-    //   3. El jugador debe tener el tag "Player".
-    /*
-    private void OnCollisionEnter(Collision collision)
+    // ---- Dano al jugador ------------------------------------------------
+    void CausarDaño()
     {
-        if (collision.gameObject.CompareTag("Player"))
-            CausarDanio(collision.gameObject);
-    }
-
-    void CausarDanio(GameObject objetivo)
-    {
-        ControlPlayer cp = objetivo.GetComponent<ControlPlayer>();
+        ControlPlayer cp = jugador.GetComponent<ControlPlayer>();
         if (cp != null)
             cp.RecibirDanio();
     }
-    */
 
     // ---- Vision en cono ------------------------------------------------
     bool PuedeVerAlJugador()
