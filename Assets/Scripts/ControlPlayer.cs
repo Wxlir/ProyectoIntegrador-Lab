@@ -6,6 +6,7 @@ public class ControlPlayer : MonoBehaviour
     public float velocidad = 4f;
     public float sensibilidadMouse = 10.5f;
     public GameObject explosionPrefab;
+    public AudioClip sonidoExplosion;
 
     [Header("Sistema de Vida")]
     [Range(0, 5)] public int vida = 2;
@@ -80,6 +81,11 @@ public class ControlPlayer : MonoBehaviour
     System.Collections.IEnumerator EsperarYExplotar(Vector3 posicionBomba, float tiempo)
     {
         yield return new WaitForSeconds(tiempo);
+
+        if (sonidoExplosion != null)
+        {
+            AudioSource.PlayClipAtPoint(sonidoExplosion, posicionBomba);
+        }
 
         // 💥 EXPLOSIÓN VISUAL (PARTÍCULAS)
 
