@@ -5,6 +5,7 @@ public class ControlPlayer : MonoBehaviour
     [Header("Ajustes de Movimiento")]
     public float velocidad = 4f;
     public float sensibilidadMouse = 10.5f;
+    public GameObject explosionPrefab;
 
     [Header("Sistema de Vida")]
     [Range(0, 5)] public int vida = 2;
@@ -79,6 +80,11 @@ public class ControlPlayer : MonoBehaviour
     System.Collections.IEnumerator EsperarYExplotar(Vector3 posicionBomba, float tiempo)
     {
         yield return new WaitForSeconds(tiempo);
+
+        // 💥 EXPLOSIÓN VISUAL (PARTÍCULAS)
+
+        GameObject explosion = Instantiate(explosionPrefab, posicionBomba, Quaternion.identity);
+        Destroy(explosion, 2f);
 
         // Buscamos basura alrededor de la bomba, no del jugador
         Collider[] objetosCercanos = Physics.OverlapSphere(posicionBomba, 3f);

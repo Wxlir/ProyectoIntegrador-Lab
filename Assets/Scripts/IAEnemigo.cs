@@ -36,14 +36,27 @@ public class IAEnemigo : MonoBehaviour
     private Estado estado;
 
     private NavMeshAgent agente;
+    private Vector3 posicionInicio;
+    private bool estaVivo = true;
     private Transform jugador;
     private float timerRastreo;
     private float timerMemoria;
     private float timerGolpe;
     private Vector3 ultimaPosicionJugador;
+    [Header("Audio")]
+    public AudioSource audioSource;
+    public AudioClip sonidoDeteccion;
+
+    private bool estabaViendo = false;
+
+    [Header("Color Enemigo")]
+    public Renderer rend;
+    public Color colorNormal = Color.white;
+    public Color colorPersecucion = Color.red;
 
     void Start()
     {
+        posicionInicio = transform.position;
         agente = GetComponent<NavMeshAgent>();
 
         // Buena calidad de evitacion para que los enemigos no se atraviesen entre si.
@@ -64,13 +77,28 @@ public class IAEnemigo : MonoBehaviour
 
         estado = Estado.Patrullando;
         agente.speed = velocidadPatrulla;
+        if (rend != null)
+        {
+            rend.material.color = colorNormal;
+        }
     }
 
     void Update()
     {
+        
         if (jugador == null || agente == null) return;
-
+        if (!estaVivo) return;
         bool veAlJugador = PuedeVerAlJugador();
+        // 🔊 Detectar momento exacto de deteccion
+        if (veAlJugador && !estabaViendo)
+        {
+            if (audioSource != null && sonidoDeteccion != null)
+            {
+                audioSource.PlayOneShot(sonidoDeteccion);
+            }
+        }
+
+        estabaViendo = veAlJugador;
 
         switch (estado)
         {
@@ -165,6 +193,10 @@ public class IAEnemigo : MonoBehaviour
         estado = Estado.Persiguiendo;
         ultimaPosicionJugador = jugador.position;
         agente.speed = velocidadPersecucion;
+        if (rend != null)
+        {
+            rend.material.color = colorPersecucion;
+        }
     }
 
     void DetenerPersecucion()
@@ -172,6 +204,10 @@ public class IAEnemigo : MonoBehaviour
         estado = Estado.Patrullando;
         agente.speed = velocidadPatrulla;
         agente.ResetPath();
+        if (rend != null)
+        {
+            rend.material.color = colorNormal;
+        }
     }
 
     // ---- Patrulla aleatoria -------------------------------------------
@@ -265,5 +301,20 @@ public class IAEnemigo : MonoBehaviour
         // Radio de deteccion cercana (rojo)
         Gizmos.color = new Color(1f, 0f, 0f, 0.5f);
         Gizmos.DrawWireSphere(transform.position, radioDeteccionCercana);
+    }
+    public void Morir()
+    {
+        if (!estaVivo) return;
+
+        estaVivo = false;
+        gameObject.SetActive(false);
+
+        Invoke(nameof(Respawn), 3f);
+    }
+    void Respawn()
+    {
+        transform.position = posicionInicio;
+        gameObject.SetActive(true);
+        estaVivo = true;
     }
 }
