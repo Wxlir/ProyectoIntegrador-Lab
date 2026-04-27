@@ -34220,6 +34220,13 @@ MonoBehaviour:
   sonidoExplosion: {fileID: 0}
   vida: 2
   hudManager: {fileID: 1584066565}
+  lluviaRoot: {fileID: 0}
+  usarNieblaDinamica: 1
+  densidadNieblaPeligro: 0.1
+  cantidadChunksPorMuro: 10
+  fuerzaExplosionChunks: 2
+  radioExplosionChunks: 1
+  tiempoVidaChunks: 8
 --- !u!1001 &1330893249
 PrefabInstance:
   m_ObjectHideFlags: 0
