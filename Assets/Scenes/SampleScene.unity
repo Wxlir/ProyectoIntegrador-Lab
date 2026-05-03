@@ -34223,13 +34223,19 @@ MonoBehaviour:
   lluviaRoot: {fileID: 0}
   usarNieblaDinamica: 1
   densidadNieblaPeligro: 0.1
+  lluviaCaidaPS: {fileID: 0}
+  lluviaSalpicaduraPS: {fileID: 0}
+  lluviaOndasPS: {fileID: 0}
+  intensidadSuaveCaida: 0.18
+  intensidadSuaveSalpicadura: 0.189
+  intensidadSuaveOndas: 0.193
   lluviaSuaveClip: {fileID: 0}
   lluviaFuerteClip: {fileID: 0}
   particulasPolvoClip: {fileID: 0}
   vientoNieblaClip: {fileID: 0}
   vidrioClip: {fileID: 0}
   volumenLluviaSuave: 0.127
-  volumenLluviaFuerte: 0.259
+  volumenLluviaFuerte: 0.208
   volumenParticulasPolvo: 0.443
   volumenVientoNiebla: 0.04
   volumenVidrio: 0.797
