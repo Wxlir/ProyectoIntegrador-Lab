@@ -34223,6 +34223,16 @@ MonoBehaviour:
   lluviaRoot: {fileID: 0}
   usarNieblaDinamica: 1
   densidadNieblaPeligro: 0.1
+  lluviaSuaveClip: {fileID: 0}
+  lluviaFuerteClip: {fileID: 0}
+  particulasPolvoClip: {fileID: 0}
+  vientoNieblaClip: {fileID: 0}
+  vidrioClip: {fileID: 0}
+  volumenLluviaSuave: 0.127
+  volumenLluviaFuerte: 0.259
+  volumenParticulasPolvo: 0.443
+  volumenVientoNiebla: 0.04
+  volumenVidrio: 0.797
   cantidadChunksPorMuro: 10
   fuerzaExplosionChunks: 2
   radioExplosionChunks: 1

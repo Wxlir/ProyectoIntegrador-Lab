@@ -19,6 +19,24 @@ public class ControlPlayer : MonoBehaviour
     [SerializeField] private GameObject lluviaRoot;
     [SerializeField] private bool usarNieblaDinamica = true;
     [SerializeField] private float densidadNieblaPeligro = 0.06f;
+    [SerializeField] private ParticleSystem lluviaCaidaPS;
+    [SerializeField] private ParticleSystem lluviaSalpicaduraPS;
+    [SerializeField] private ParticleSystem lluviaOndasPS;
+    [SerializeField] [Range(0.05f, 1f)] private float intensidadSuaveCaida = 0.35f;
+    [SerializeField] [Range(0.05f, 1f)] private float intensidadSuaveSalpicadura = 0.3f;
+    [SerializeField] [Range(0.05f, 1f)] private float intensidadSuaveOndas = 0.4f;
+
+    [Header("Paisaje Sonoro")]
+    [SerializeField] private AudioClip lluviaSuaveClip;
+    [SerializeField] private AudioClip lluviaFuerteClip;
+    [SerializeField] private AudioClip particulasPolvoClip;
+    [SerializeField] private AudioClip vientoNieblaClip;
+    [SerializeField] private AudioClip vidrioClip;
+    [SerializeField][Range(0f, 1f)] private float volumenLluviaSuave = 0.2f;
+    [SerializeField][Range(0f, 1f)] private float volumenLluviaFuerte = 0.35f;
+    [SerializeField][Range(0f, 1f)] private float volumenParticulasPolvo = 0.18f;
+    [SerializeField][Range(0f, 1f)] private float volumenVientoNiebla = 0.16f;
+    [SerializeField][Range(0f, 1f)] private float volumenVidrio = 0.85f;
 
     [Header("Escombros de Cristal")]
     [SerializeField] private int cantidadChunksPorMuro = 7;
@@ -32,6 +50,16 @@ public class ControlPlayer : MonoBehaviour
     private bool juegoTerminado;
     private float densidadNieblaNormal;
     private bool climaPeligroActivo;
+    private AudioSource lluviaSuaveSource;
+    private AudioSource lluviaFuerteSource;
+    private AudioSource particulasPolvoSource;
+    private AudioSource vientoNieblaSource;
+    private float lluviaCaidaRateBase;
+    private float lluviaSalpicaduraRateBase;
+    private float lluviaOndasRateBase;
+    private int lluviaCaidaMaxBase;
+    private int lluviaSalpicaduraMaxBase;
+    private int lluviaOndasMaxBase;
 
     void Start()
     {
@@ -41,6 +69,9 @@ public class ControlPlayer : MonoBehaviour
         if (lluviaRoot == null)
             lluviaRoot = GameObject.Find("Lluvia");
 
+        ConfigurarParticulasLluvia();
+        CargarClipsPaisajeSonoro();
+        ConfigurarPaisajeSonoro();
         hudManager?.ActualizarVida(vida);
         ActualizarClimaPorVida(true);
     }
@@ -71,6 +102,8 @@ public class ControlPlayer : MonoBehaviour
         {
             LanzarBomba();
         }
+
+        ActualizarVolumenesPaisajeSonoro();
     }
 
     void LanzarBomba()
@@ -135,9 +168,141 @@ public class ControlPlayer : MonoBehaviour
             if (!destruidos.Add(objetivo))
                 continue;
 
+            ReproducirVidrio(objetivo.transform.position);
             CrearEscombrosCristal(objetivo, centroExplosion);
             Destroy(objetivo);
         }
+    }
+
+    void CargarClipsPaisajeSonoro()
+    {
+        if (lluviaSuaveClip == null)
+            lluviaSuaveClip = Resources.Load<AudioClip>("Sounds/Ambience/Lluvia suave");
+        if (lluviaFuerteClip == null)
+            lluviaFuerteClip = Resources.Load<AudioClip>("Sounds/Ambience/Lluvia fuerte");
+        if (particulasPolvoClip == null)
+            particulasPolvoClip = Resources.Load<AudioClip>("Sounds/Ambience/ParticulasPolvo");
+        if (vientoNieblaClip == null)
+            vientoNieblaClip = Resources.Load<AudioClip>("Sounds/Ambience/Viento - niebla");
+        if (vidrioClip == null)
+            vidrioClip = Resources.Load<AudioClip>("Sounds/Ambience/Vidrio");
+    }
+
+    void ConfigurarParticulasLluvia()
+    {
+        if (lluviaRoot == null)
+            return;
+
+        if (lluviaCaidaPS == null || lluviaSalpicaduraPS == null || lluviaOndasPS == null)
+        {
+            ParticleSystem[] sistemas = lluviaRoot.GetComponentsInChildren<ParticleSystem>(true);
+            foreach (ParticleSystem sistema in sistemas)
+            {
+                if (lluviaCaidaPS == null && sistema.gameObject.name == "Caida_Lluviaa")
+                    lluviaCaidaPS = sistema;
+                else if (lluviaSalpicaduraPS == null && sistema.gameObject.name == "Salpicadura")
+                    lluviaSalpicaduraPS = sistema;
+                else if (lluviaOndasPS == null && sistema.gameObject.name == "Ondas")
+                    lluviaOndasPS = sistema;
+            }
+        }
+
+        lluviaRoot.SetActive(true);
+        CachearBaseLluvia(lluviaCaidaPS, ref lluviaCaidaRateBase, ref lluviaCaidaMaxBase);
+        CachearBaseLluvia(lluviaSalpicaduraPS, ref lluviaSalpicaduraRateBase, ref lluviaSalpicaduraMaxBase);
+        CachearBaseLluvia(lluviaOndasPS, ref lluviaOndasRateBase, ref lluviaOndasMaxBase);
+    }
+
+    void CachearBaseLluvia(ParticleSystem sistema, ref float rateBase, ref int maxBase)
+    {
+        if (sistema == null)
+            return;
+
+        var emission = sistema.emission;
+        var main = sistema.main;
+        rateBase = emission.rateOverTimeMultiplier;
+        maxBase = main.maxParticles;
+
+        if (!sistema.isPlaying)
+            sistema.Play();
+    }
+
+    void AplicarIntensidadLluvia(bool lluviaPeligro)
+    {
+        AplicarIntensidadParticulaLluvia(lluviaCaidaPS, lluviaPeligro ? 1f : intensidadSuaveCaida, lluviaCaidaRateBase, lluviaCaidaMaxBase);
+        AplicarIntensidadParticulaLluvia(lluviaSalpicaduraPS, lluviaPeligro ? 1f : intensidadSuaveSalpicadura, lluviaSalpicaduraRateBase, lluviaSalpicaduraMaxBase);
+        AplicarIntensidadParticulaLluvia(lluviaOndasPS, lluviaPeligro ? 1f : intensidadSuaveOndas, lluviaOndasRateBase, lluviaOndasMaxBase);
+    }
+
+    void AplicarIntensidadParticulaLluvia(ParticleSystem sistema, float intensidad, float rateBase, int maxBase)
+    {
+        if (sistema == null)
+            return;
+
+        intensidad = Mathf.Max(0.01f, intensidad);
+        var emission = sistema.emission;
+        emission.rateOverTimeMultiplier = rateBase * intensidad;
+
+        var main = sistema.main;
+        main.maxParticles = Mathf.Max(1, Mathf.RoundToInt(maxBase * intensidad));
+
+        if (!sistema.isPlaying)
+            sistema.Play();
+    }
+
+    void ConfigurarPaisajeSonoro()
+    {
+        lluviaSuaveSource = CrearLoop2D("RainSoftLoop", lluviaSuaveClip, volumenLluviaSuave);
+        lluviaFuerteSource = CrearLoop2D("RainStrongLoop", lluviaFuerteClip, volumenLluviaFuerte);
+        particulasPolvoSource = CrearLoop2D("DustLoop", particulasPolvoClip, volumenParticulasPolvo);
+        vientoNieblaSource = CrearLoop2D("WindFogLoop", vientoNieblaClip, volumenVientoNiebla);
+
+        IniciarLoopSiTieneClip(lluviaSuaveSource);
+        IniciarLoopSiTieneClip(particulasPolvoSource);
+        IniciarLoopSiTieneClip(vientoNieblaSource);
+    }
+
+    AudioSource CrearLoop2D(string nombre, AudioClip clip, float volumen)
+    {
+        if (clip == null)
+            return null;
+
+        GameObject audioGO = new GameObject(nombre);
+        audioGO.transform.SetParent(transform, false);
+
+        AudioSource source = audioGO.AddComponent<AudioSource>();
+        source.playOnAwake = false;
+        source.loop = true;
+        source.spatialBlend = 0f;
+        source.clip = clip;
+        source.volume = volumen;
+        return source;
+    }
+
+    void IniciarLoopSiTieneClip(AudioSource source)
+    {
+        if (source != null && source.clip != null && !source.isPlaying)
+            source.Play();
+    }
+
+    void ActualizarVolumenesPaisajeSonoro()
+    {
+        if (lluviaSuaveSource != null)
+            lluviaSuaveSource.volume = volumenLluviaSuave;
+        if (lluviaFuerteSource != null)
+            lluviaFuerteSource.volume = volumenLluviaFuerte;
+        if (particulasPolvoSource != null)
+            particulasPolvoSource.volume = volumenParticulasPolvo;
+        if (vientoNieblaSource != null)
+            vientoNieblaSource.volume = volumenVientoNiebla;
+    }
+
+    void ReproducirVidrio(Vector3 posicion)
+    {
+        if (vidrioClip == null)
+            return;
+
+        AudioSource.PlayClipAtPoint(vidrioClip, posicion, volumenVidrio);
     }
 
     void CrearEscombrosCristal(GameObject objetivo, Vector3 centroExplosion)
@@ -207,8 +372,20 @@ public class ControlPlayer : MonoBehaviour
 
         climaPeligroActivo = activarClimaPeligro;
 
-        if (lluviaRoot != null)
-            lluviaRoot.SetActive(activarClimaPeligro);
+        AplicarIntensidadLluvia(activarClimaPeligro);
+
+        if (lluviaFuerteSource != null)
+        {
+            if (activarClimaPeligro)
+            {
+                if (!lluviaFuerteSource.isPlaying)
+                    lluviaFuerteSource.Play();
+            }
+            else if (lluviaFuerteSource.isPlaying)
+            {
+                lluviaFuerteSource.Stop();
+            }
+        }
 
         if (usarNieblaDinamica)
         {
