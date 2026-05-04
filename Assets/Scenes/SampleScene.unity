@@ -2016,15 +2016,15 @@ MonoBehaviour:
   tiempoMemoria: 5
   tiempoRastreoExtra: 1
   radioAtaque: 1.2
-  tiempoEntreGolpes: 2
+  tiempoEntreGolpes: 5
   velocidadPatrulla: 0.85
   radioPatrulla: 15
-  radioDeteccion: 8
+  radioDeteccion: 7
   anguloVision: 45
   radioDeteccionCercana: 2.5
   capaObstaculos:
     serializedVersion: 2
-    m_Bits: 65
+    m_Bits: 64
   audioSource: {fileID: 398349492}
   sonidoDeteccion: {fileID: 8300000, guid: 2e013e8198131d949b7e859c8cc6b0f7, type: 3}
   rend: {fileID: 398349490}
@@ -2053,7 +2053,7 @@ Rigidbody:
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 1
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
@@ -2766,7 +2766,7 @@ MonoBehaviour:
   tiempoEntreGolpes: 2
   velocidadPatrulla: 0.85
   radioPatrulla: 15
-  radioDeteccion: 8
+  radioDeteccion: 7
   anguloVision: 45
   radioDeteccionCercana: 2.5
   capaObstaculos:
@@ -2800,7 +2800,7 @@ Rigidbody:
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 1
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
@@ -39344,7 +39344,7 @@ Transform:
   m_GameObject: {fileID: 1486384314}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 5.89, y: -0.5, z: -0.34}
+  m_LocalPosition: {x: 6.2, y: -0.5, z: 0.21}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -39369,7 +39369,7 @@ MonoBehaviour:
   tiempoEntreGolpes: 2
   velocidadPatrulla: 0.85
   radioPatrulla: 15
-  radioDeteccion: 8
+  radioDeteccion: 7
   anguloVision: 45
   radioDeteccionCercana: 2.5
   capaObstaculos:
@@ -39403,7 +39403,7 @@ Rigidbody:
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 1
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
